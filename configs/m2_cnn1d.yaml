@@ -1,0 +1,21 @@
+data:
+  root: data/servo_rul_v1
+  split: data/servo_rul_v1/split_manifest.json
+  rul_cap: 130            # piecewise-linear RUL cap (see DATASHEET / assignment Sec. 12)
+
+model:
+  name: cnn1d
+  window: 50
+  channels: [64, 128, 128, 256] 
+  kernel_size: 3
+  dropout: 0.3
+
+training:
+  seed: 42
+  deterministic: true
+  max_epochs: 100
+  batch_size: 200
+  lr: 3.0e-4
+
+output:
+  dir: runs/mkt3432_proof_workspace
