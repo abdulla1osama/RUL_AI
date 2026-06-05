@@ -3,8 +3,12 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-
-def create_sliding_windows(df: pd.DataFrame, feature_columns: list[str], window_size: int,target_column: str = "rul_capped",) -> tuple[np.ndarray, np.ndarray]:
+def create_sliding_windows(
+    df: pd.DataFrame,
+    feature_columns: list[str],
+    window_size: int,
+    target_column: str = "rul_capped",
+) -> tuple[np.ndarray, np.ndarray]:
     windows: list[np.ndarray] = []
     targets: list[float] = []
 
@@ -15,16 +19,36 @@ def create_sliding_windows(df: pd.DataFrame, feature_columns: list[str], window_
         unit_df = unit_df.sort_values("cycle")
 
         feature_values = unit_df[feature_columns].to_numpy(dtype=np.float32)
-
-        if target_column not in unit_df.columns:
-            continue
-
         target_values = unit_df[target_column].to_numpy(dtype=np.float32)
 
-        for end_idx in range(window_size - 1, len(unit_df)):
-            start_idx = end_idx - window_size + 1
+        for end_idx in range(len(unit_df)):
+            start_idx = max(0, end_idx - window_size + 1)
 
             window = feature_values[start_idx : end_idx + 1]
+
+            real_mask = np.ones(
+                (len(window), 1),
+                dtype=np.float32,
+            )
+
+            window = np.concatenate(
+                [window, real_mask],
+                axis=1,
+            )
+
+            if len(window) < window_size:
+                pad_count = window_size - len(window)
+
+                pad = np.zeros(
+                    (pad_count, len(feature_columns) + 1),
+                    dtype=np.float32,
+                )
+
+                window = np.concatenate(
+                    [pad, window],
+                    axis=0,
+                )
+
             target = target_values[end_idx]
 
             windows.append(window)
