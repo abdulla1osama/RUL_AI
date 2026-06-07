@@ -38,9 +38,9 @@
 {\Large\bfseries Yildiz Technical University}\\[0.3em]
 {\large Department of Mechatronics Engineering}\\[2.0cm]
 
-{\large\bfseries Course:} MKT3432 --- Condition Monitoring \& Prognostics\\[0.4em]
-{\large\bfseries Project:} Per-Cycle RUL Estimation and Degradation-Stage\\
-Discovery Pipeline for a Servo-Actuator\\[1.5cm]
+{\large\bfseries Course:} MKT3432 --- \texttt{[Course Name]}\\[0.4em]
+{\large\bfseries Project:} Run-to-Failure \& Remaining Useful Life (RUL) Term Project\\
+Per-Cycle RUL Estimation and Degradation-Stage Discovery\\for a Servo-Actuator\\[1.5cm]
 
 \begin{tabular}{ll}
 \textbf{Group name / number:} & \texttt{[Group Name / Number]}\\[0.4em]
@@ -308,18 +308,27 @@ M2 1D-CNN & 50 & multi-scale + 3 res, drop 0.3 & 100 & 200 & $3\times10^{-4}$\\
 \end{tabular}
 \end{center}
 
-\textbf{Run commands.}
+\textbf{Run commands.} \code{SPLIT=data/servo\_rul\_v1/split\_manifest.json}.
 \begin{quote}\scriptsize\ttfamily
-PYTHONPATH=src python tools/generate\_dataset.py\\
+PYTHONPATH=src python tools/generate\_dataset.py\\[0.3em]
+\# M1 (MLP) --- the submitted model\\
+PYTHONPATH=src python scripts/train.py --config configs/m1\_mlp.yaml\\
+PYTHONPATH=src python scripts/predict.py --config configs/m1\_mlp.yaml \textbackslash\\
+\hspace*{1em}--split \$SPLIT --out runs/student\_predictions.csv --clusters-out runs/student\_clusters.csv\\
+PYTHONPATH=src python scripts/evaluate.py --predictions runs/student\_predictions.csv \textbackslash\\
+\hspace*{1em}--split \$SPLIT --out runs/student\_results.summary.json --clusters runs/student\_clusters.csv\\[0.3em]
+\# M2 (1D-CNN) --- deep-model evidence\\
 PYTHONPATH=src python scripts/train.py --config configs/m2\_cnn1d.yaml\\
 PYTHONPATH=src python scripts/predict.py --config configs/m2\_cnn1d.yaml \textbackslash\\
-\hspace*{1em}--split data/servo\_rul\_v1/split\_manifest.json \textbackslash\\
-\hspace*{1em}--out runs/student\_predictions.csv --clusters-out runs/student\_clusters.csv\\
-PYTHONPATH=src python scripts/evaluate.py --predictions runs/student\_predictions.csv \textbackslash\\
-\hspace*{1em}--split data/servo\_rul\_v1/split\_manifest.json \textbackslash\\
-\hspace*{1em}--out runs/student\_results.summary.json --clusters runs/student\_clusters.csv\\
+\hspace*{1em}--split \$SPLIT --out runs/m2\_predictions.csv --clusters-out runs/m2\_clusters.csv\\
+PYTHONPATH=src python scripts/evaluate.py --predictions runs/m2\_predictions.csv \textbackslash\\
+\hspace*{1em}--split \$SPLIT --out runs/m2\_results.summary.json --clusters runs/m2\_clusters.csv\\[0.3em]
+\# M0 (linear) is run the same way with configs/m0\_linear.yaml; figures last\\
 PYTHONPATH=src python scripts/make\_figures.py --config configs/m2\_cnn1d.yaml
 \end{quote}
+Both \code{runs/student\_predictions.csv} (M1) and \code{runs/m2\_predictions.csv}
+(M2) are regenerated above, so \code{make\_figures.py} can draw both
+predicted-vs-true plots.
 
 % =====================================================================
 % 8. RESULTS
