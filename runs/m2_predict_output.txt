@@ -1,0 +1,5 @@
+Saved predictions to: runs/m2_predictions.csv
+Model: cnn1d
+Prediction rows: 5451
+Saved clusters to: runs/m2_clusters.csv
+Cluster rows: 5451

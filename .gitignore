@@ -19,3 +19,12 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+# Generated dataset (regenerated locally / by grader)
+/data/
+
+# Trained model weights (large binaries; grader retrains)
+runs/**/best_model.pt
+runs/**/*.joblib
+
+# Local-only starter zip
+*.zip
