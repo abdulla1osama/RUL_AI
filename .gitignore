@@ -28,3 +28,10 @@ runs/**/*.joblib
 
 # Local-only starter zip
 *.zip
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.out
+*.synctex.gz
+REPORT.log

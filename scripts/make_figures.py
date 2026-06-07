@@ -15,29 +15,45 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def save_val_predicted_vs_true(config: dict, figures_dir: Path) -> None:
-    pred_path = Path("runs/student_predictions_cnn1d.csv")
-    truth_path = Path("data/servo_rul_v1/test_labels.csv")
+def _data_root(config: dict) -> Path:
+    return Path(config["data"]["root"])
+
+
+def save_predicted_vs_true(
+    config: dict,
+    figures_dir: Path,
+    pred_path: Path,
+    out_name: str,
+    title: str,
+) -> None:
+    """Scatter of predicted vs (capped) true RUL for a held-out prediction file.
+
+    The truth file (``test_labels.csv``) is read by the official evaluator on the
+    instructor side; here it is only used to draw the diagnostic figure.
+    """
+    truth_path = _data_root(config) / "test_labels.csv"
 
     if not pred_path.exists() or not truth_path.exists():
-        print("Skipping predicted-vs-true figure: prediction or truth file missing.")
+        print(f"Skipping {out_name}: missing {pred_path} or {truth_path}.")
         return
 
+    rul_cap = config["data"]["rul_cap"]
     pred = pd.read_csv(pred_path)
     truth = pd.read_csv(truth_path)
 
     merged = pred.merge(truth, on=["unit_id", "cycle"])
-    merged["rul_true_capped"] = merged["rul"].clip(upper=config["data"]["rul_cap"])
+    merged["rul_true_capped"] = merged["rul"].clip(upper=rul_cap)
 
     plt.figure(figsize=(7, 6))
     plt.scatter(merged["rul_true_capped"], merged["rul_pred"], s=8, alpha=0.5)
-    plt.plot([0, 130], [0, 130], linestyle="--")
+    plt.plot([0, rul_cap], [0, rul_cap], linestyle="--", color="k")
     plt.xlabel("True capped RUL")
     plt.ylabel("Predicted RUL")
-    plt.title("Predicted vs True RUL")
+    plt.title(title)
     plt.tight_layout()
-    plt.savefig(figures_dir / "val_predicted_vs_true.png", dpi=200)
+    plt.savefig(figures_dir / out_name, dpi=200)
     plt.close()
+    print(f"Saved {figures_dir / out_name}")
 
 
 def save_pca_and_gmm_figures(config: dict, figures_dir: Path) -> None:
@@ -69,6 +85,7 @@ def save_pca_and_gmm_figures(config: dict, figures_dir: Path) -> None:
     plt.tight_layout()
     plt.savefig(figures_dir / "train_pca_hidden_stage.png", dpi=200)
     plt.close()
+    print(f"Saved {figures_dir / 'train_pca_hidden_stage.png'}")
 
     plt.figure(figsize=(7, 6))
     plt.scatter(X_pca[:, 0], X_pca[:, 1], c=clusters, s=8, alpha=0.6)
@@ -78,6 +95,7 @@ def save_pca_and_gmm_figures(config: dict, figures_dir: Path) -> None:
     plt.tight_layout()
     plt.savefig(figures_dir / "train_gmm_clusters_pca.png", dpi=200)
     plt.close()
+    print(f"Saved {figures_dir / 'train_gmm_clusters_pca.png'}")
 
 
 def main() -> None:
@@ -87,7 +105,24 @@ def main() -> None:
     figures_dir = Path("runs/figures")
     figures_dir.mkdir(parents=True, exist_ok=True)
 
-    save_val_predicted_vs_true(config, figures_dir)
+    # Required predicted-vs-true figure uses the submitted predictions file (M1).
+    save_predicted_vs_true(
+        config,
+        figures_dir,
+        pred_path=Path("runs/student_predictions.csv"),
+        out_name="val_predicted_vs_true.png",
+        title="Predicted vs True RUL (M1 MLP)",
+    )
+
+    # Matching figure for the deep temporal model (M2 CNN), when available.
+    save_predicted_vs_true(
+        config,
+        figures_dir,
+        pred_path=Path("runs/m2_predictions.csv"),
+        out_name="m2_predicted_vs_true.png",
+        title="Predicted vs True RUL (M2 1D-CNN)",
+    )
+
     save_pca_and_gmm_figures(config, figures_dir)
 
     print(f"Saved figures to: {figures_dir}")
